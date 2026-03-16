@@ -1,0 +1,29 @@
+{
+  "Argentina": {
+    "name": "Argentina",
+    "file_name": "Argentina.gpkg",
+    "levels": [
+      "department",
+      "fraction"
+    ],
+    "mapping": {
+      "department": {
+        "db_column": "level2",
+        "layer_name": "department",
+        "spatial_id": "cde",
+        "label_col": "nam"
+      },
+      "fraction": {
+        "db_column": "level3",
+        "layer_name": "fraction",
+        "spatial_id": "cod_indec",
+        "label_col": "cod_indec",
+        "parent_col": "cde"
+      }
+    },
+    "derived_codes": {
+      "province_nchar": 2,
+      "department_nchar": 5
+    }
+  }
+}
