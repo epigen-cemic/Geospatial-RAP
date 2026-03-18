@@ -13,7 +13,7 @@ geospatialUI <- function(id) {
 
     div(class = "hero-section",
         div(class = "hero-content",
-            h1(class = "app-title", "Geospatial Analysis - WP1.2 v1.1")
+            h1(class = "app-title", "Geospatial Analysis")
         )
     ),
 
@@ -53,27 +53,30 @@ geospatialUI <- function(id) {
 
               # ---- Main panel ----
               column(9,
-                uiOutput(ns("error_message")),
-                uiOutput(ns("global_moran_banner")),
-
-                tabsetPanel(
-                  tabPanel("Prevalence Map",
-                           br(),
-                           leaflet::leafletOutput(ns("prevalence_map"), height = "650px")
-                  ),
-                  tabPanel("LISA Cluster Map",
-                           br(),
-                           leaflet::leafletOutput(ns("lisa_map"), height = "650px")
-                  ),
-                  tabPanel("Results Table",
-                           br(),
-                           DT::DTOutput(ns("results_table")),
-                           br(),
-                           downloadButton(ns("download_results"),
-                                          "Download Results CSV",
-                                          class = "btn-default")
-                  )
-                )
+                     uiOutput(ns("error_message")),
+                     uiOutput(ns("global_moran_banner")),
+                     
+                     # THE FIX: Wrap the tabsetPanel in the main-tabs div!
+                     div(class = "main-tabs",
+                         tabsetPanel(
+                           tabPanel("Prevalence Map",
+                                    br(),
+                                    leaflet::leafletOutput(ns("prevalence_map"), height = "650px")
+                           ),
+                           tabPanel("LISA Cluster Map",
+                                    br(),
+                                    leaflet::leafletOutput(ns("lisa_map"), height = "650px")
+                           ),
+                           tabPanel("Results Table",
+                                    br(),
+                                    DT::DTOutput(ns("results_table")),
+                                    br(),
+                                    downloadButton(ns("download_results"),
+                                                   "Download Results CSV",
+                                                   class = "btn-default")
+                           )
+                         )
+                     )
               )
             )
         )
@@ -89,15 +92,26 @@ geospatialServer <- function(id) {
     # -- Data ingestion ---------------------------------------------------------
     raw_combined_data <- reactive({
       req(input$file_upload)
-      tryCatch(
-        combine_uploaded_data(input$file_upload$datapath),
-        error = function(e) {
-          showNotification(paste("Error reading files:", e$message), type = "error")
-          NULL
-        }
-      )
-    })
+      tryCatch({
+        # 1. Read the raw files
+        file_paths <- setNames(input$file_upload$datapath, seq_along(input$file_upload$datapath))
+        raw_df <- purrr::map_dfr(file_paths, read.csv, .id = "file_index")
+        # This will lowercase, rename aliases, validate columns, AND pad the zeros.
+        clean_df <- standardise_input_columns(
+          df             = raw_df, 
+          config         = config, 
+          active_country = active_country
+        )
 
+        return(clean_df)
+        
+      }, error = function(e) {
+        message("CRITICAL ERROR READING CSV: ", e$message)
+        showNotification(paste("Error reading files:", e$message), type = "error", duration = 15)
+        return(NULL)
+      })
+    })
+    
     # -- Dynamic year selector --------------------------------------------------
     output$year_ui <- renderUI({
       req(raw_combined_data())
@@ -127,9 +141,6 @@ geospatialServer <- function(id) {
     })
 
     # -- Resolve selected week window ------------------------------------------
-    # BUG FIX: wrapped in req() per branch and guarded with tryCatch to avoid
-    #   NULL reference errors when the corresponding input hasn't rendered yet
-    #   (e.g. week_range exists but time_mode just switched to "single").
     selected_weeks <- reactive({
       req(input$time_mode)
       if (input$time_mode == "single") {
@@ -144,45 +155,76 @@ geospatialServer <- function(id) {
 
     # -- Core analysis (triggered by button only) ------------------------------
     analyzed_sf <- eventReactive(input$run_analysis, {
+      
+      # Check if inputs exist
       req(raw_combined_data(), input$geo_level, input$selected_year, selected_weeks())
-
+      
       wk <- selected_weeks()
-
-      analysis_df <- tryCatch(
+      
+      # 1. Prepare tabular data
+      analysis_df <- tryCatch({
         prepare_geospatial_dataset(
           df              = raw_combined_data(),
           selected_level  = input$geo_level,
           selected_year   = as.integer(input$selected_year),
           week_from       = wk[1],
           week_to         = wk[2],
-          dept_code_nchar = config$Argentina$derived_codes$department_nchar
-        ),
-        error = function(e) {
-          showNotification(paste("Data preparation error:", e$message), type = "error")
-          NULL
-        }
+          config          = config,         
+          active_country  = active_country  
+        )
+      }, error = function(e) {
+        showNotification(paste("Data prep error:", e$message), type = "error")
+        return(NULL)
+      })
+      
+      shiny::validate(shiny::need(!is.null(analysis_df) && nrow(analysis_df) > 0, "No data available."))
+      
+      # 2. Load spatial geometry
+      sf_layer <- tryCatch({
+        load_geospatial_layer(
+          selected_level = input$geo_level,
+          config         = config,          
+          active_country = active_country   
+        )
+      }, error = function(e) {
+        showNotification(paste("Geopackage error:", e$message), type = "error")
+        return(NULL)
+      })
+      
+      shiny::validate(shiny::need(!is.null(sf_layer), "Could not load spatial layer."))
+      
+      # 3. Standardize IDs with leading zeros for spatial join
+      expected_len <- config[[active_country]]$mapping[[input$geo_level]]$code_length
+      
+      sf_layer$id <- stringr::str_pad(
+        as.character(sf_layer$id), 
+        width = expected_len, 
+        pad = "0"
       )
-
-      shiny::validate(shiny::need(!is.null(analysis_df) && nrow(analysis_df) > 0,
-                    "No data available for the selected period and geographic level."))
-
-      sf_layer <- tryCatch(
-        load_geospatial_layer(country        = "Argentina",
-                              selected_level = input$geo_level,
-                              config         = config),
-        error = function(e) {
-          showNotification(paste("Geopackage error:", e$message), type = "error")
-          NULL
-        }
+      
+      analysis_df$analysis_unit_id <- as.character(analysis_df$analysis_unit_id)
+      
+      # 4. Perform the join
+      joined_sf <- join_analysis_to_geometry(sf_layer, analysis_df)
+      
+      # 5. Isolate regions with data to prevent spatial math errors
+      joined_sf <- joined_sf %>% dplyr::filter(!is.na(.data[[target_var]]))
+      
+      # Validate that the join was successful
+      matched_rows <- nrow(joined_sf)
+      shiny::validate(
+        shiny::need(
+          matched_rows > 0, 
+          sprintf("Spatial Join Failure: The CSV IDs (e.g., %s) do not match the Map IDs (e.g., %s).", 
+                  head(analysis_df$analysis_unit_id, 1), head(sf_layer$id, 1))
+        )
       )
-
-      shiny::validate(shiny::need(!is.null(sf_layer), "Could not load the spatial layer. Check that Argentina.gpkg is in raw_data/."))
-
-      joined_sf <- join_analysis_to_geometry(sf_layer, analysis_df,
-                                             selected_level = input$geo_level)
-      compute_lisa(joined_sf, value_col = "prevalence_100k", alpha = 0.05)
+      
+      # 6. Execute spatial cluster analysis
+      final_sf <- compute_lisa(joined_sf, target_var = target_var)
+      
+      return(final_sf)
     })
-
     # -- Input validation banner ------------------------------------------------
     output$error_message <- renderUI({
       req(raw_combined_data())
@@ -197,67 +239,56 @@ geospatialServer <- function(id) {
     # -- Global Moran's I summary banner ----------------------------------------
     output$global_moran_banner <- renderUI({
       req(analyzed_sf())
-      gm <- compute_global_moran(analyzed_sf(), value_col = "prevalence_100k")
+      
+      # FIX: Changed value_col to target_var
+      gm <- compute_global_moran(analyzed_sf(), target_var = target_var)
+      
       if (is.null(gm)) return(NULL)
-
+      
       sig_label <- if (gm$p_value < 0.001) "p < 0.001" else paste0("p = ", gm$p_value)
       colour    <- if (gm$p_value <= 0.05) "#e8f5e9" else "#f5f5f5"
       border    <- if (gm$p_value <= 0.05) "#2e7d32"  else "#9e9e9e"
       txt_col   <- if (gm$p_value <= 0.05) "#1b5e20"  else "#616161"
-
+      
       div(style = sprintf(
-            "background:%s; border-left:5px solid %s; color:%s; padding:10px 14px; margin-bottom:14px; font-size:13px;",
-            colour, border, txt_col),
-          sprintf("Global Moran's I = %s  (%s) — %s",
-                  gm$statistic, sig_label,
-                  if (gm$p_value <= 0.05) "statistically significant spatial autocorrelation"
-                  else "no significant spatial autocorrelation detected")
+        "background:%s; border-left:5px solid %s; color:%s; padding:10px 14px; margin-bottom:14px; font-size:13px;",
+        colour, border, txt_col),
+        sprintf("Global Moran's I = %s  (%s) — %s",
+                gm$statistic, sig_label,
+                if (gm$p_value <= 0.05) "statistically significant spatial autocorrelation"
+                else "no significant spatial autocorrelation detected")
       )
     })
 
     # -- Map outputs -----------------------------------------------------------
     output$prevalence_map <- leaflet::renderLeaflet({
       req(analyzed_sf())
-      render_prevalence_map(analyzed_sf(), selected_level = input$geo_level)
+      # Passes global target_var and is_offline switch
+      render_prevalence_map(analyzed_sf(), target_var = target_var, is_offline = is_offline)
     })
-
+    
     output$lisa_map <- leaflet::renderLeaflet({
       req(analyzed_sf())
-      render_lisa_map(analyzed_sf(), selected_level = input$geo_level)
+      render_lisa_map(analyzed_sf(), target_var = target_var, is_offline = is_offline)
     })
-
+    
     # -- Results table ---------------------------------------------------------
-    results_tbl <- reactive({
-      req(analyzed_sf())
-      prepare_results_table(analyzed_sf(), selected_level = input$geo_level)
-    })
-
     output$results_table <- DT::renderDT({
-      req(results_tbl())
-      DT::datatable(
-        results_tbl(),
-        rownames = FALSE,
-        filter   = "top",
-        options  = list(pageLength = 15, scrollX = TRUE)
-      ) %>%
-        DT::formatStyle(
-          "LISA_cluster",
-          backgroundColor = DT::styleEqual(
-            c("High-High", "Low-Low", "High-Low", "Low-High", "Not significant"),
-            c("#fdd0cb",   "#c9d9f0",  "#fde0c9",  "#d5ecf8",  "#f0f0f0")
-          )
-        )
+      req(analyzed_sf())
+      # One function now handles both data cleaning and LISA color styling
+      render_results_table(analyzed_sf(), target_var = target_var)
     })
-
-    # -- Download handler -------------------------------------------------------
+    
+    # For the download handler, you still need the raw data (without HTML/DT styling)
     output$download_results <- downloadHandler(
       filename = function() {
         wk <- selected_weeks()
-        paste0("geospatial_results_", input$geo_level, "_",
-               input$selected_year, "_w", wk[1], "_to_", wk[2], ".csv")
+        paste0("geospatial_results_", input$geo_level, "_", input$selected_year, ".csv")
       },
       content = function(file) {
-        readr::write_csv(results_tbl(), file)
+        # Use the cleaning function directly for the CSV export
+        raw_tbl <- prepare_results_table(analyzed_sf(), target_var = target_var)
+        readr::write_csv(raw_tbl, file)
       }
     )
   })

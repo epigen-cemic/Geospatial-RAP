@@ -234,7 +234,7 @@ body {
 }
 
 /* ==========================================
-   6. BUTTONS
+   6. BUTTONS (Updated)
    ========================================== */
 .btn-default {
   background-color: #f8f9fa;
@@ -246,4 +246,33 @@ body {
   background-color: var(--nav-bg-color) !important;
   color: white !important;
   border-color: var(--nav-bg-color) !important;
+}
+
+/* Green Theme for Action & Download Buttons */
+.btn-info, .btn-warning, .btn-primary {
+  background-color: var(--hero-bg-color) !important;
+  color: white !important;
+  border: 1px solid #4a594a !important; 
+  transition: all 0.2s;
+}
+
+.btn-info:hover, .btn-warning:hover, .btn-primary:hover {
+  background-color: var(--nav-bg-color) !important; /* Dark Olive on hover */
+  border-color: var(--nav-bg-color) !important;
+  color: white !important;
+}
+
+/* Explicit Disabled State to prevent invisible buttons */
+.btn-info[disabled], .btn-warning[disabled], .btn-primary[disabled], .btn-default[disabled] {
+  background-color: #e0e0e0 !important;
+  border-color: #cccccc !important;
+  color: #999999 !important;
+  opacity: 1 !important; /* Forces visibility */
+  pointer-events: none; /* Disables hover effects */
+}
+
+/* --- Geospatial Map Background Override --- */
+/* Changes the default white map canvas to a solid grey to make pale clusters pop */
+.leaflet-container {
+    background-color: #808080 !important; /* A solid, dark-medium grey */
 }

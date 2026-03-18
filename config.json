@@ -1,29 +1,66 @@
 {
+  "Example_Country": {
+    "name": "Example Country",
+    "file_name": "Example.gpkg",
+    "levels": [
+      "region",
+      "district",
+      "subdistrict"
+    ],
+    "mapping": {
+      "region": {
+        "csv_column": "level1",
+        "layer_name": "Region_Layer",
+        "spatial_id": "reg_id",
+        "label_col": "reg_name",
+        "code_length": 3
+      },
+      "district": {
+        "csv_column": "level2",
+        "layer_name": "District_Layer",
+        "spatial_id": "dist_id",
+        "label_col": "dist_name",
+        "code_length": 6
+      },
+      "subdistrict": {
+        "csv_column": "level3",
+        "layer_name": "Subdist_Layer",
+        "spatial_id": "sub_id",
+        "label_col": "sub_name",
+        "code_length": 9
+      }
+    }
+  },
   "Argentina": {
     "name": "Argentina",
     "file_name": "Argentina.gpkg",
     "levels": [
+      "province",
       "department",
       "fraction"
     ],
     "mapping": {
+      "province": {
+        "csv_column": "level1",
+        "layer_name": "Province",
+        "spatial_id": "cpr",
+        "label_col": "nam",
+        "code_length": 2
+      },
       "department": {
-        "db_column": "level2",
-        "layer_name": "department",
+        "csv_column": "level2",
+        "layer_name": "Department",
         "spatial_id": "cde",
-        "label_col": "nam"
+        "label_col": "nam",
+        "code_length": 5
       },
       "fraction": {
-        "db_column": "level3",
-        "layer_name": "fraction",
+        "csv_column": "level3",
+        "layer_name": "Censal Fraction",
         "spatial_id": "cod_indec",
         "label_col": "cod_indec",
-        "parent_col": "cde"
+        "code_length": 7
       }
-    },
-    "derived_codes": {
-      "province_nchar": 2,
-      "department_nchar": 5
     }
   }
 }
