@@ -168,6 +168,18 @@ body {
   margin-bottom: 8px;
 }
 
+.sidebar-dark input {
+  background-color: #ffffff !important; 
+  color: #333333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 2px;
+}
+
+.sidebar-dark .selectize-input input {
+  width: 0 !important;
+  opacity: 0 !important;
+}
+
 .title-label {
   color: white;
   font-size: 22px;
@@ -183,13 +195,6 @@ body {
   justify-content: space-between; 
   align-items: center; 
   margin-bottom: 15px; 
-}
-
-.sidebar-dark input {
-  background-color: #ffffff !important; 
-  color: #333333 !important;
-  border: 1px solid #ccc !important;
-  border-radius: 2px;
 }
 
 .input-overlay-wrapper {
@@ -274,5 +279,5 @@ body {
 /* --- Geospatial Map Background Override --- */
 /* Changes the default white map canvas to a solid grey to make pale clusters pop */
 .leaflet-container {
-    background-color: #808080 !important; /* A solid, dark-medium grey */
+    background-color: #999999 !important;
 }

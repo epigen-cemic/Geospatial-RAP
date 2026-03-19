@@ -12,7 +12,7 @@ library(jsonlite)
 active_country <- "Argentina"
 config         <- fromJSON("config.json")
 input_gpkg     <- file.path("raw_data", config[[active_country]]$file_name)
-output_dir     <- "build_data"
+output_dir <- "data"
 
 # Create output directory if it doesn't exist
 if (!dir.exists(output_dir)) dir.create(output_dir)

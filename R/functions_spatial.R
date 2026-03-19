@@ -42,6 +42,26 @@ load_geospatial_layer <- function(selected_level,
 }
 
 
+#' @title Load Background Layer (Optimized RDS)
+#'
+#' @description
+#' Loads a pre-optimized spatial layer from an RDS file for fast offline rendering.
+#'
+#' @param level Character. The level name (e.g., "province", "department").
+#' @param data_dir Character. Directory where optimized RDS files are stored.
+#'
+#' @return An sf object.
+#' @export
+load_background_layer <- function(level, data_dir = "data") {
+  path <- file.path(data_dir, paste0(level, "_optimized.rds"))
+  
+  if (!file.exists(path)) {
+    stop(sprintf("Background RDS not found: %s", path))
+  }
+  
+  readRDS(path)
+}
+
 #' @title Join Analytical Data to Geometry
 #'
 #' @description

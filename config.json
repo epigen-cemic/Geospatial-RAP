@@ -56,7 +56,8 @@
       },
       "fraction": {
         "csv_column": "level3",
-        "layer_name": "Censal Fraction",
+        "layer_name": "Fraction", 
+        "ui_label": "Censal Fraction",
         "spatial_id": "cod_indec",
         "label_col": "cod_indec",
         "code_length": 7

@@ -263,13 +263,26 @@ geospatialServer <- function(id) {
     # -- Map outputs -----------------------------------------------------------
     output$prevalence_map <- leaflet::renderLeaflet({
       req(analyzed_sf())
-      # Passes global target_var and is_offline switch
-      render_prevalence_map(analyzed_sf(), target_var = target_var, is_offline = is_offline)
+      render_prevalence_map(
+        analyzed_sf(),
+        target_var     = target_var,
+        is_offline     = is_offline,
+        selected_level = input$geo_level,
+        config         = config,
+        active_country = active_country
+      )
     })
     
     output$lisa_map <- leaflet::renderLeaflet({
       req(analyzed_sf())
-      render_lisa_map(analyzed_sf(), target_var = target_var, is_offline = is_offline)
+      render_lisa_map(
+        analyzed_sf(),
+        target_var     = target_var,
+        is_offline     = is_offline,
+        selected_level = input$geo_level,
+        config         = config,
+        active_country = active_country
+      )
     })
     
     # -- Results table ---------------------------------------------------------

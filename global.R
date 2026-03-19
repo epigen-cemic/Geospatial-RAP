@@ -44,14 +44,34 @@ is_offline     <- FALSE
 # Dynamically build geo_choices from the config
 country_mappings <- config[[active_country]]$mapping
 
-# 1. Identify which keys correspond to level 2 and level 3
+# 4. Load the silhouette using the level1 key
+  # 4.1. Dynamically find the key used for Level 1 (e.g., "province")
+level1_key <- names(country_mappings)[sapply(country_mappings, function(x) {
+  x$csv_column == "level1"
+})]
+
+  # 4.2. Load the background silhouette using the correct key
+bg_layer <- load_geospatial_layer(
+  selected_level = level1_key[1], 
+  config         = config, 
+  active_country = active_country
+)
+
+# 5. Identify which keys correspond to level 2 and level 3
 valid_keys <- names(country_mappings)[sapply(country_mappings, function(x) {
   x$csv_column %in% c("level2", "level3")
 })]
 
-# 2. Build the named vector for the Shiny UI dropdown
-geo_choices <- valid_keys
+# 6. Create the vector using the keys (internal names)
+geo_choices <- valid_keys 
+
+# 7. NOW assign the names for the UI dropdown
 names(geo_choices) <- sapply(valid_keys, function(k) {
-  # Uses the layer_name (e.g., "Department") as the UI display text
-  country_mappings[[k]]$layer_name 
+  cfg <- country_mappings[[k]]
+  
+  if (!is.null(cfg$ui_label)) {
+    return(cfg$ui_label)
+  } else {
+    return(cfg$layer_name)
+  }
 })
