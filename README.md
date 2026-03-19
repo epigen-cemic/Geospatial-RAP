@@ -23,7 +23,7 @@ The tool can be distributed as:
 
 For detailed usage, configuration, and deployment instructions, refer to:
 
-* 🇬🇧 `www/docs/HELP_EN.md`
-* 🇪🇸 `www/docs/HELP_ES.md`
+* 🇬🇧 [English Developer & Admin Guide](www/docs/HELP_EN.md)
+* 🇪🇸 [Guía de Desarrollo y Administración en Español](www/docs/HELP_ES.md)
 
 End-users can access the full user manual inside the application via the **Help** button.
