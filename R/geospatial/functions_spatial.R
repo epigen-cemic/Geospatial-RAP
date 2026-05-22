@@ -25,10 +25,12 @@ load_geospatial_layer <- function(selected_level,
     stop(sprintf("Geopackage not found at: %s", gpkg_path))
   }
 
+  label_col <- api_pop_get_name_col(layer_info)
+
   sql <- sprintf(
     "SELECT %s AS id, %s AS label, geom FROM %s",
     layer_info$spatial_id,
-    layer_info$label_col,
+    label_col,
     layer_info$layer_name
   )
 
@@ -57,13 +59,14 @@ load_background_layer <- function(level, data_dir = "data") {
 #' @title Join Analytical Data to Geometry
 #' @param sf_layer sf object. The map polygons with a standardized 'id' column.
 #' @param analysis_df Data frame. The results with an 'analysis_unit_id' column.
+#' @param target_var Character scalar. Analysis variable used to check join success.
 #' @return A joined sf object containing both geometry and analytical data.
 #' @export
-join_analysis_to_geometry <- function(sf_layer, analysis_df) {
+join_analysis_to_geometry <- function(sf_layer, analysis_df, target_var = "prevalence_100k") {
 
   joined <- dplyr::left_join(sf_layer, analysis_df, by = c("id" = "analysis_unit_id"))
 
-  if (all(is.na(joined$prevalence_100k))) {
+  if (target_var %in% names(joined) && all(is.na(joined[[target_var]]))) {
     warning("Spatial Join Failure: 0 geometries matched the analysis data. Check ID formatting.")
   }
 

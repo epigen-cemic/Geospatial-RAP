@@ -11,13 +11,7 @@
 #' @importFrom readr read_csv read_csv2
 #' @export
 read_api_pop_output <- function(path) {
-  first_line <- readLines(path, n = 1, warn = FALSE)
-
-  if (grepl(";", first_line)) {
-    readr::read_csv2(path, show_col_types = FALSE)
-  } else {
-    readr::read_csv(path, show_col_types = FALSE)
-  }
+  api_pop_read_file(path)
 }
 
 
@@ -40,41 +34,12 @@ read_api_pop_output <- function(path) {
 #' @importFrom purrr keep
 #' @export
 standardise_input_columns <- function(df, config, active_country) {
-
-  names(df) <- tolower(names(df))
-
-  candidates <- list(
-    n_cases    = c("n_cases", "cases", "count", "n"),
-    population = c("population", "n_population", "pop", "denominator")
+  api_pop_standardise_columns(
+    df,
+    config = config,
+    active_country = active_country,
+    require_population = TRUE
   )
-
-  for (std in names(candidates)) {
-    hits <- candidates[[std]][candidates[[std]] %in% names(df)]
-    if (length(hits) == 0) stop(sprintf("Required column for '%s' not found.", std))
-    if (hits[1] != std) names(df)[names(df) == hits[1]] <- std
-  }
-
-  required <- c("country", "level2", "level3", "year", "week", "n_cases", "population")
-  missing  <- setdiff(required, names(df))
-
-  if (length(missing) > 0) {
-    stop(sprintf("Missing required columns: %s", paste(missing, collapse = ", ")))
-  }
-
-  mappings <- config[[active_country]]$mapping
-  lvl2_len <- purrr::keep(mappings, ~ .x$csv_column == "level2")[[1]]$code_length
-  lvl3_len <- purrr::keep(mappings, ~ .x$csv_column == "level3")[[1]]$code_length
-
-  df %>%
-    dplyr::mutate(
-      country    = stringr::str_trim(as.character(country)),
-      level2     = stringr::str_pad(stringr::str_trim(as.character(level2)), width = lvl2_len, pad = "0"),
-      level3     = stringr::str_pad(stringr::str_trim(as.character(level3)), width = lvl3_len, pad = "0"),
-      year       = as.integer(year),
-      week       = as.integer(week),
-      n_cases    = as.numeric(n_cases),
-      population = as.numeric(population)
-    )
 }
 
 
@@ -97,8 +62,12 @@ standardise_input_columns <- function(df, config, active_country) {
 #' @importFrom purrr map_dfr
 #' @export
 combine_uploaded_data <- function(file_paths, config, active_country) {
-  raw_df <- purrr::map_dfr(file_paths, read_api_pop_output, .id = "file_index")
-  standardise_input_columns(raw_df, config, active_country)
+  api_pop_combine_files(
+    file_paths = file_paths,
+    config = config,
+    active_country = active_country,
+    require_population = TRUE
+  )
 }
 
 
@@ -123,7 +92,7 @@ combine_uploaded_data <- function(file_paths, config, active_country) {
 #' @param config List. The parsed configuration object loaded from config.json.
 #' @param active_country Character string. The target country block to read from the config.
 #'
-#' @return A summarized tibble with analysis_unit_id, n_cases, population, n_weeks, and prevalence_100k.
+#' @return A summarized tibble with analysis_unit_id, n_cases, population, n_weeks, and the configured target variable.
 #' @export
 prepare_geospatial_dataset <- function(df,
                                        selected_level,
@@ -138,12 +107,27 @@ prepare_geospatial_dataset <- function(df,
 
   if (nrow(df_filtered) == 0) return(NULL)
 
-  mappings   <- config[[active_country]]$mapping
-  target_len <- mappings[[selected_level]]$code_length
+  mappings <- config[[active_country]]$mapping
+  level_cfg <- mappings[[selected_level]]
+  target_col <- api_pop_mapping_column(level_cfg)
+
+  if (is.null(target_col) || !target_col %in% names(df_filtered)) {
+    stop(sprintf("Selected level '%s' maps to column '%s', but that column is not present in the uploaded data.",
+                 selected_level, target_col))
+  }
+
+  # For population aggregation, deduplicate at the most detailed available
+  # geography. This avoids double-counting static population denominators over
+  # multiple weeks.
+  geo_cols <- c("level4", "level3", "level2", "level1")
+  source_geo_col <- geo_cols[geo_cols %in% names(df_filtered)][1]
+  if (is.na(source_geo_col) || length(source_geo_col) == 0) {
+    source_geo_col <- target_col
+  }
 
   df_filtered <- df_filtered %>%
     dplyr::mutate(
-      analysis_unit_id = substr(level3, 1, target_len)
+      analysis_unit_id = as.character(.data[[target_col]])
     )
 
   cases_agg <- df_filtered %>%
@@ -155,9 +139,9 @@ prepare_geospatial_dataset <- function(df,
     )
 
   pop_agg <- df_filtered %>%
-    dplyr::distinct(level3, .keep_all = TRUE) %>%
+    dplyr::distinct(.data[[source_geo_col]], .keep_all = TRUE) %>%
     dplyr::mutate(
-      analysis_unit_id = substr(level3, 1, target_len)
+      analysis_unit_id = as.character(.data[[target_col]])
     ) %>%
     dplyr::group_by(analysis_unit_id) %>%
     dplyr::summarise(
@@ -165,9 +149,25 @@ prepare_geospatial_dataset <- function(df,
       .groups = "drop"
     )
 
-  dplyr::left_join(cases_agg, pop_agg, by = "analysis_unit_id") %>%
+  rate_multiplier <- rap_geospatial_rate_multiplier(config)
+  target_var <- rap_config_value(config, "target_var", "prevalence_100k")
+
+  out <- dplyr::left_join(cases_agg, pop_agg, by = "analysis_unit_id") %>%
     dplyr::mutate(
-      prevalence_100k = (n_cases / population) * 100000
+      !!target_var := (n_cases / population) * rate_multiplier
     ) %>%
     dplyr::filter(population > 0, !is.na(population))
+
+  prep_log <- api_pop_get_log(df)
+  prep_log <- c(
+    prep_log,
+    sprintf("Filtered data to year %s and weeks %s-%s.", selected_year, week_from, week_to),
+    sprintf("Rows after time filtering: %s.", nrow(df_filtered)),
+    sprintf("Aggregated cases to selected level '%s' using column '%s'.", selected_level, target_col),
+    sprintf("Population denominators were deduplicated by '%s' before aggregation.", source_geo_col),
+    sprintf("Calculated %s using a rate multiplier of %s.", target_var, rate_multiplier),
+    sprintf("Prepared geospatial dataset contains %s spatial unit(s).", nrow(out))
+  )
+
+  api_pop_set_log(out, prep_log)
 }

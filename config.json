@@ -1,4 +1,13 @@
 {
+  "is_offline": false,
+  "active_country": "Argentina",
+  "default_country": "Argentina",
+  "default_level": "department",
+  "default_year": null,
+  "target_var": "prevalence_100k",
+  "geospatial": {
+    "rate_multiplier": 100000
+  },
   "Example_Country": {
     "name": "Example Country",
     "file_name": "Example.gpkg",
@@ -13,21 +22,24 @@
         "layer_name": "Region_Layer",
         "spatial_id": "reg_id",
         "label_col": "reg_name",
-        "code_length": 3
+        "code_length": 3,
+        "name_col": "reg_name"
       },
       "district": {
         "csv_column": "level2",
         "layer_name": "District_Layer",
         "spatial_id": "dist_id",
         "label_col": "dist_name",
-        "code_length": 6
+        "code_length": 6,
+        "name_col": "dist_name"
       },
       "subdistrict": {
         "csv_column": "level3",
         "layer_name": "Subdist_Layer",
         "spatial_id": "sub_id",
         "label_col": "sub_name",
-        "code_length": 9
+        "code_length": 9,
+        "name_col": "sub_name"
       }
     }
   },
@@ -45,22 +57,59 @@
         "layer_name": "Province",
         "spatial_id": "cpr",
         "label_col": "nam",
-        "code_length": 2
+        "code_length": 2,
+        "name_col": "nam"
       },
       "department": {
         "csv_column": "level2",
         "layer_name": "Department",
         "spatial_id": "cde",
         "label_col": "nam",
-        "code_length": 5
+        "code_length": 5,
+        "name_col": "nam"
       },
       "fraction": {
         "csv_column": "level3",
-        "layer_name": "Fraction", 
+        "layer_name": "Fraction",
         "ui_label": "Censal Fraction",
         "spatial_id": "cod_indec",
         "label_col": "cod_indec",
-        "code_length": 7
+        "code_length": 7,
+        "name_col": "cod_indec"
+      }
+    }
+  },
+  "England": {
+    "name": "England",
+    "file_name": "England.gpkg",
+    "levels": [
+      "Region",
+      "LAD",
+      "MSOA"
+    ],
+    "mapping": {
+      "Region": {
+        "csv_column": "level1",
+        "db_column": "Level1",
+        "layer_name": "Region",
+        "spatial_id": "RGN22CD",
+        "name_col": "RGN22NM"
+      },
+      "LAD": {
+        "csv_column": "level2",
+        "db_column": "Level2",
+        "parent_col": "RGN22CD",
+        "layer_name": "LAD",
+        "spatial_id": "LAD22CD",
+        "name_col": "LAD22NM"
+      },
+      "MSOA": {
+        "csv_column": "level3",
+        "db_column": "Level3",
+        "parent_col": "LAD23CD",
+        "layer_name": "MSOA",
+        "spatial_id": "MSOA21CD",
+        "name_col": "MSOA21NM"
       }
     }
   }

@@ -7,6 +7,7 @@
 library(sf)
 library(dplyr)
 library(jsonlite)
+source("R/shared/api_pop_io.R")
 
 # --- Configuration ---
 active_country <- "Argentina"
@@ -31,7 +32,7 @@ for (lvl in levels_to_process) {
   # 2. Read layer with standardized SQL
   # We select only the columns defined in the JSON
   sql <- sprintf("SELECT %s AS id, %s AS label, geom FROM %s", 
-                 lvl_cfg$spatial_id, lvl_cfg$label_col, lvl_cfg$layer_name)
+                 lvl_cfg$spatial_id, api_pop_get_name_col(lvl_cfg), lvl_cfg$layer_name)
   
   layer <- st_read(input_gpkg, query = sql, quiet = TRUE) %>%
     st_make_valid() %>%

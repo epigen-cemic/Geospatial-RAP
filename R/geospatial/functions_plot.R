@@ -1,3 +1,29 @@
+
+#' @title Human-readable Variable Label
+#' @description Converts internal variable names to labels suitable for legends and tables.
+#' @keywords internal
+pretty_var_label <- function(x) {
+  if (is.null(x) || length(x) == 0 || is.na(x[1])) {
+    return("")
+  }
+  
+  x <- as.character(x[1])
+  
+  labels <- c(
+    prevalence_100k = "Prevalence per 100,000",
+    n_cases = "Cases",
+    cases = "Cases",
+    population = "Population"
+  )
+  
+  if (x %in% names(labels)) {
+    return(unname(labels[x]))
+  }
+  
+  x <- gsub("_", " ", x)
+  paste0(toupper(substr(x, 1, 1)), substr(x, 2, nchar(x)))
+}
+
 #' @title Prepare Results Table
 #' @description Formats the spatial analysis results into a clean, non-spatial 
 #' dataframe for display in the Shiny UI (DT table).
@@ -13,11 +39,11 @@ prepare_results_table <- function(sf_df, target_var) {
       Area         = label,
       Cases        = n_cases,
       Population   = population,
-      Result       = round(.data[[target_var]], 2),
+      `Prevalence per 100,000` = round(.data[[target_var]], 2),
       P_value      = round(p_value, 4),
       LISA_cluster = lisa_category
     ) %>%
-    dplyr::arrange(dplyr::desc(Result), ID)
+    dplyr::arrange(dplyr::desc(`Prevalence per 100,000`), ID)
 }
 
 
@@ -25,8 +51,7 @@ prepare_results_table <- function(sf_df, target_var) {
 #' @description Vectorized HTML label.
 #' @keywords internal
 format_popup_label <- function(sf_df, target_var) {
-  var_label <- gsub("_", " ", target_var)
-  var_label <- paste0(toupper(substr(var_label, 1, 1)), substr(var_label, 2, nchar(var_label)))
+  var_label <- pretty_var_label(target_var)
 
   sprintf(
     "<strong>%s</strong> (ID: %s)<br/>
@@ -54,7 +79,7 @@ get_background_level <- function(selected_level, config, active_country) {
   mappings <- config[[active_country]]$mapping
 
   ordered_keys <- names(mappings)[order(sapply(mappings, function(x) {
-    as.numeric(gsub("level", "", x$csv_column))
+    as.numeric(gsub("level", "", api_pop_mapping_column(x)))
   }))]
 
   pos <- match(selected_level, ordered_keys)
@@ -107,8 +132,9 @@ add_base_geospatial_map <- function(sf_df, target_var, pal, fill_col,
       weight       = 0.5,
       popup        = format_popup_label(sf_df, target_var),
       highlightOptions = leaflet::highlightOptions(
-        weight = 2,
-        color = "#ffffff",
+        weight = 3,
+        color = "#1E2A15",
+        fillOpacity = 0.9,
         bringToFront = TRUE
       )
     )
@@ -155,7 +181,7 @@ render_prevalence_map <- function(sf_df, target_var, is_offline,
     leaflet::addLegend(
       pal    = pal,
       values = sf_df[[target_var]],
-      title  = target_var,
+      title  = pretty_var_label(target_var),
       opacity = 1
     )
 }
