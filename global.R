@@ -22,11 +22,11 @@ library(leaflet)
 # Turn off s2 geometry for planar compatibility.
 sf::sf_use_s2(FALSE)
 
-# Load shared helpers before reading app-level settings.
+# Load shared configuration helpers before reading app-level settings.
 source("R/shared/config_helpers.R")
 source("R/shared/api_pop_io.R")
 
-# Load configuration.
+# Load configuration before modules so shared helpers can use it.
 config_path <- "config.json"
 config <- jsonlite::fromJSON(config_path)
 
@@ -40,10 +40,18 @@ default_year <- rap_default_year(config)
 rate_multiplier <- rap_geospatial_rate_multiplier(config)
 preflight_results <- rap_geospatial_preflight(config, active_countries)
 
-# Source modules and functions.
-source("R/geospatial/functions_io.R")
-source("R/geospatial/functions_spatial.R")
-source("R/geospatial/functions_plot.R")
-source("R/geospatial/mod_geospatial.R")
-source("R/help_ui.R")
+# Load remaining modules and functions.
+app_files <- list.files(
+  "R",
+  pattern = "\\.R$",
+  full.names = TRUE,
+  recursive = TRUE
+)
 
+app_files <- app_files[
+  !grepl("^R/scripts/", app_files) &
+    app_files != "R/shared/config_helpers.R" &
+    app_files != "R/shared/api_pop_io.R"
+]
+
+invisible(lapply(sort(app_files), source))

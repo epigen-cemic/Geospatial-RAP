@@ -39,8 +39,8 @@ prepare_results_table <- function(sf_df, target_var) {
       Area         = label,
       Cases        = n_cases,
       Population   = population,
-      `Prevalence per 100,000` = round(.data[[target_var]], 2),
-      P_value      = round(p_value, 4),
+      `Prevalence per 100,000` = .data[[target_var]],
+      P_value      = p_value,
       LISA_cluster = lisa_category
     ) %>%
     dplyr::arrange(dplyr::desc(`Prevalence per 100,000`), ID)
@@ -227,7 +227,7 @@ render_lisa_map <- function(sf_df, target_var, is_offline,
 #' @param target_var Character. The name of the analysis variable.
 #' @return A DT datatable object.
 #' @export
-render_results_table <- function(sf_df, target_var) {
+render_results_table <- function(sf_df, target_var, digits = 4L) {
 
   tbl_data <- prepare_results_table(sf_df, target_var)
 
@@ -239,7 +239,7 @@ render_results_table <- function(sf_df, target_var) {
     "Not Significant" = "#f0f0f0"
   )
 
-  DT::datatable(
+  dt <- DT::datatable(
     tbl_data,
     rownames = FALSE,
     filter   = "top",
@@ -248,7 +248,15 @@ render_results_table <- function(sf_df, target_var) {
       scrollX = TRUE,
       dom = 'ltip'
     )
-  ) %>%
+  )
+
+  decimal_cols <- c("Prevalence per 100,000", "P_value")
+  decimal_cols <- intersect(decimal_cols, names(tbl_data))
+  if (length(decimal_cols) > 0) {
+    dt <- DT::formatRound(dt, columns = decimal_cols, digits = digits)
+  }
+
+  dt %>%
     DT::formatStyle(
       "LISA_cluster",
       backgroundColor = DT::styleEqual(names(cluster_colors), unname(cluster_colors))

@@ -56,21 +56,74 @@ load_background_layer <- function(level, data_dir = "data") {
 }
 
 
+#' @title Normalise Geography Join Keys
+#'
+#' @description
+#' Internal helper used when matching uploaded geography values to spatial-layer
+#' IDs or labels. It trims whitespace, lowercases values, and removes accents so
+#' names such as "Ciudad Autonoma de Buenos Aires" can match spatial labels such
+#' as "Ciudad Autónoma de Buenos Aires".
+#'
+#' @param x Vector of geography IDs or names.
+#'
+#' @return Character vector with normalised join keys.
+#' @keywords internal
+normalise_geography_join_key <- function(x) {
+  x <- as.character(x)
+  x <- stringr::str_squish(x)
+  x <- stringi::stri_trans_general(x, "Latin-ASCII")
+  tolower(x)
+}
+
 #' @title Join Analytical Data to Geometry
-#' @param sf_layer sf object. The map polygons with a standardized 'id' column.
-#' @param analysis_df Data frame. The results with an 'analysis_unit_id' column.
+#' @param sf_layer sf object. The map polygons with standardized `id` and `label` columns.
+#' @param analysis_df Data frame. The results with an `analysis_unit_id` column.
 #' @param target_var Character scalar. Analysis variable used to check join success.
 #' @return A joined sf object containing both geometry and analytical data.
 #' @export
 join_analysis_to_geometry <- function(sf_layer, analysis_df, target_var = "prevalence_100k") {
 
-  joined <- dplyr::left_join(sf_layer, analysis_df, by = c("id" = "analysis_unit_id"))
+  sf_layer$id <- as.character(sf_layer$id)
+  analysis_df$analysis_unit_id <- as.character(analysis_df$analysis_unit_id)
 
-  if (target_var %in% names(joined) && all(is.na(joined[[target_var]]))) {
-    warning("Spatial Join Failure: 0 geometries matched the analysis data. Check ID formatting.")
+  joined_by_id <- dplyr::left_join(sf_layer, analysis_df, by = c("id" = "analysis_unit_id"))
+
+  id_matches <- 0L
+  if (target_var %in% names(joined_by_id)) {
+    id_matches <- sum(!is.na(joined_by_id[[target_var]]))
   }
 
-  joined
+  if (id_matches > 0L || !"label" %in% names(sf_layer)) {
+    if (target_var %in% names(joined_by_id) && all(is.na(joined_by_id[[target_var]]))) {
+      warning("Spatial Join Failure: 0 geometries matched the analysis data. Check ID formatting.")
+    }
+    return(joined_by_id)
+  }
+
+  # Some API-POP exports use geography names (for example, "Comuna 10") while
+  # the configured spatial layer uses official codes as IDs (for example,
+  # "02070"). If ID matching fails, fall back to matching against the spatial
+  # label/name column.
+  sf_by_label <- sf_layer %>%
+    dplyr::mutate(.join_key = normalise_geography_join_key(.data$label))
+
+  analysis_by_label <- analysis_df %>%
+    dplyr::mutate(.join_key = normalise_geography_join_key(.data$analysis_unit_id))
+
+  joined_by_label <- dplyr::left_join(sf_by_label, analysis_by_label, by = ".join_key") %>%
+    dplyr::select(-.join_key)
+
+  label_matches <- 0L
+  if (target_var %in% names(joined_by_label)) {
+    label_matches <- sum(!is.na(joined_by_label[[target_var]]))
+  }
+
+  if (label_matches > 0L) {
+    return(joined_by_label)
+  }
+
+  warning("Spatial Join Failure: 0 geometries matched the analysis data by ID or by geography label/name.")
+  joined_by_id
 }
 
 

@@ -5,7 +5,7 @@
   --nav-bg-color: #2d332a;    /* Dark Olive/Black */
   --hero-bg-color: #5b6d5b;   /* Muted Sage Green */
   --menu-opaque-green: rgba(91, 109, 91, 0.85); 
-  --sidebar-bg: #4a4a4a;
+  --sidebar-bg: #48563F;
   --bg-light: #f4f4f4;
 }
 
@@ -307,6 +307,33 @@ body {
 }
 
 
+.dashboard-run-button {
+  width: 100%;
+  background: #F69342 !important;
+  color: #1E2A15 !important;
+  border: 1px solid #F69342 !important;
+  border-radius: 4px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.dashboard-run-button:hover,
+.dashboard-run-button:focus {
+  background: #d97923 !important;
+  border-color: #d97923 !important;
+  color: #1E2A15 !important;
+}
+
+
 /* ==========================================
    HELP AND DATA REQUIREMENTS
    ========================================== */
@@ -446,14 +473,16 @@ body {
 }
 
 .dashboard-primary-button {
-  background: #48563f;
-  color: #ffffff;
+  background: #48563f !important;
+  border: 1px solid #48563f !important;
+  color: #ffffff !important;
 }
 
 .dashboard-primary-button:hover,
 .dashboard-primary-button:focus {
-  background: #324027;
-  color: #ffffff;
+  background: #324027 !important;
+  border-color: #324027 !important;
+  color: #ffffff !important;
 }
 
 .dashboard-danger-button {
@@ -493,4 +522,112 @@ body {
 .uploaded-files-table .checkbox,
 .uploaded-files-table input[type="checkbox"] {
   margin: 0;
+}
+
+
+.uploaded-files-table-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.help-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #555555 !important;
+}
+
+/* ==========================================
+   USER-CONTROLLED FONT SIZE
+   Small is the previous/default size.
+   ========================================== */
+body.font-size-small {
+  font-size: 14px;
+}
+
+body.font-size-medium {
+  font-size: 15.5px;
+}
+
+body.font-size-large {
+  font-size: 17px;
+}
+
+body.font-size-xlarge {
+  font-size: 18.5px;
+}
+
+body.font-size-medium .control-label,
+body.font-size-medium .custom-navbar a,
+body.font-size-medium .output-description,
+body.font-size-medium .requirements-table,
+body.font-size-medium .prepared-log,
+body.font-size-medium .uploaded-files-table {
+  font-size: 1.08em;
+}
+
+body.font-size-large .control-label,
+body.font-size-large .custom-navbar a,
+body.font-size-large .output-description,
+body.font-size-large .requirements-table,
+body.font-size-large .prepared-log,
+body.font-size-large .uploaded-files-table {
+  font-size: 1.16em;
+}
+
+body.font-size-xlarge .control-label,
+body.font-size-xlarge .custom-navbar a,
+body.font-size-xlarge .output-description,
+body.font-size-xlarge .requirements-table,
+body.font-size-xlarge .prepared-log,
+body.font-size-xlarge .uploaded-files-table {
+  font-size: 1.26em;
+}
+
+body.font-size-medium .selectize-input,
+body.font-size-medium .form-control,
+body.font-size-medium .btn {
+  font-size: 15px;
+}
+
+body.font-size-large .selectize-input,
+body.font-size-large .form-control,
+body.font-size-large .btn {
+  font-size: 16px;
+}
+
+body.font-size-xlarge .selectize-input,
+body.font-size-xlarge .form-control,
+body.font-size-xlarge .btn {
+  font-size: 17px;
+}
+
+/* Global Moran banner follows the Help-tab display font size setting. */
+.global-moran-banner {
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.95em;
+  line-height: 1.35;
+}
+
+body.font-size-medium .global-moran-banner {
+  font-size: 1.04em;
+}
+
+body.font-size-large .global-moran-banner {
+  font-size: 1.13em;
+}
+
+body.font-size-xlarge .global-moran-banner {
+  font-size: 1.24em;
+}
+
+.global-moran-summary {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.global-moran-explanation {
+  font-size: 0.92em;
+  line-height: 1.4;
+  opacity: 0.95;
 }
