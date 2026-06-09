@@ -1,3 +1,102 @@
+build_table_filter_ui <- function(ns, id_prefix, df) {
+  if (is.null(df) || nrow(df) == 0) {
+    return(NULL)
+  }
+
+  column_choices <- names(df)
+  selected_col <- column_choices[[1]]
+
+  div(
+    class = "table-filter-bar",
+    tags$label(
+      class = "table-filter-inline-label",
+      "Search by:"
+    ),
+    selectInput(
+      ns(paste0(id_prefix, "_filter_col")),
+      label = NULL,
+      choices = column_choices,
+      selected = selected_col,
+      width = "220px"
+    ),
+    uiOutput(ns(paste0(id_prefix, "_filter_value_ui")), inline = TRUE)
+  )
+}
+
+build_table_filter_value_ui <- function(ns, id_prefix, df, selected_col) {
+  if (is.null(df) || is.null(selected_col) || !selected_col %in% names(df)) {
+    return(NULL)
+  }
+
+  values <- df[[selected_col]]
+
+  if (is.numeric(values)) {
+    range_values <- range(values, na.rm = TRUE)
+
+    if (!all(is.finite(range_values))) {
+      return(NULL)
+    }
+
+    return(
+      div(
+        class = "table-filter-values",
+        numericInput(
+          ns(paste0(id_prefix, "_filter_min")),
+          label = NULL,
+          value = range_values[[1]],
+          min = range_values[[1]],
+          max = range_values[[2]],
+          width = "130px"
+        ),
+        tags$span(class = "table-filter-separator", "to"),
+        numericInput(
+          ns(paste0(id_prefix, "_filter_max")),
+          label = NULL,
+          value = range_values[[2]],
+          min = range_values[[1]],
+          max = range_values[[2]],
+          width = "130px"
+        )
+      )
+    )
+  }
+
+  textInput(
+    ns(paste0(id_prefix, "_filter_text")),
+    label = NULL,
+    value = "",
+    placeholder = paste("Search", selected_col),
+    width = "260px"
+  )
+}
+
+apply_table_filter <- function(df, selected_col, text_value = NULL, min_value = NULL, max_value = NULL) {
+  if (is.null(df) || is.null(selected_col) || !selected_col %in% names(df)) {
+    return(df)
+  }
+
+  values <- df[[selected_col]]
+
+  if (is.numeric(values)) {
+    if (!is.null(min_value) && is.finite(min_value)) {
+      df <- df[is.na(df[[selected_col]]) | df[[selected_col]] >= min_value, , drop = FALSE]
+    }
+
+    if (!is.null(max_value) && is.finite(max_value)) {
+      df <- df[is.na(df[[selected_col]]) | df[[selected_col]] <= max_value, , drop = FALSE]
+    }
+
+    return(df)
+  }
+
+  if (is.null(text_value) || !nzchar(text_value)) {
+    return(df)
+  }
+
+  keep <- grepl(text_value, as.character(values), ignore.case = TRUE, fixed = TRUE)
+  df[keep, , drop = FALSE]
+}
+
 #' Register Geospatial module logic: helpers.R
 #'
 #' @param state Internal module environment created by `geospatialServer()`.
@@ -88,7 +187,22 @@ geospatial_server_helpers <- function(state) {
     format_display_table <- function(df) {
       dt <- DT::datatable(
         df,
-        options = list(pageLength = 15, scrollX = TRUE),
+        extensions = "Buttons",
+        options = list(
+          pageLength = 15,
+          scrollX = TRUE,
+          searchHighlight = TRUE,
+          dom = "Blrtip",
+          buttons = list(
+            list(
+              extend = "colvis",
+              text = "Show / hide columns"
+            )
+          ),
+          columnDefs = list(
+            list(className = "dt-left", targets = "_all")
+          )
+        ),
         rownames = FALSE
       )
 

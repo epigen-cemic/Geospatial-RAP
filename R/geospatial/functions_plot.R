@@ -1,4 +1,3 @@
-
 #' @title Human-readable Variable Label
 #' @description Converts internal variable names to labels suitable for legends and tables.
 #' @keywords internal
@@ -46,7 +45,6 @@ prepare_results_table <- function(sf_df, target_var) {
     dplyr::arrange(dplyr::desc(`Prevalence per 100,000`), ID)
 }
 
-
 #' @title Format Popup Labels
 #' @description Vectorized HTML label.
 #' @keywords internal
@@ -67,7 +65,6 @@ format_popup_label <- function(sf_df, target_var) {
   ) %>% lapply(htmltools::HTML)
 }
 
-
 #' @title Resolve Background Geographic Level
 #' @param selected_level Character string. The currently selected geographic level.
 #' @param config List. The parsed configuration object loaded from `config.json`.
@@ -87,7 +84,6 @@ get_background_level <- function(selected_level, config, active_country) {
 
   ordered_keys[bg_pos]
 }
-
 
 #' @title Base Map Generator for Geospatial Plots
 #' @param sf_df sf object. Spatial dataframe containing geometries and analysis results.
@@ -152,6 +148,64 @@ add_base_geospatial_map <- function(sf_df, target_var, pal, fill_col,
   map
 }
 
+#' Add a prevalence legend to a leaflet map.
+#'
+#' Adds a legend for a numeric prevalence/rate variable. The helper handles
+#' three cases: no finite values, a single finite value, and multiple finite
+#' values. This avoids empty or unclear legends when the selected geography has
+#' only one mapped value.
+#'
+#' @param map A `leaflet` map object.
+#' @param sf_df An `sf` data frame containing the mapped variable.
+#' @param target_var Character string. Name of the numeric variable used for
+#'   the prevalence/rate map.
+#' @param pal A leaflet palette function, usually created with
+#'   `leaflet::colorNumeric()`.
+#'
+#' @return A `leaflet` map object with a prevalence legend added.
+#'
+#' @keywords internal
+add_prevalence_legend <- function(map, sf_df, target_var, pal) {
+  values <- sf_df[[target_var]]
+  finite_values <- values[is.finite(values)]
+  
+  title <- gsub("_", " ", target_var)
+  title <- paste0(toupper(substr(title, 1, 1)), substr(title, 2, nchar(title)))
+  
+  if (length(finite_values) == 0) {
+    return(
+      map %>%
+        leaflet::addLegend(
+          colors = "#9e9e9e",
+          labels = "No data",
+          title = title,
+          opacity = 1
+        )
+    )
+  }
+  
+  if (length(unique(finite_values)) == 1) {
+    single_value <- round(unique(finite_values), 2)
+    
+    return(
+      map %>%
+        leaflet::addLegend(
+          colors = pal(single_value),
+          labels = paste0(single_value, " only"),
+          title = title,
+          opacity = 1
+        )
+    )
+  }
+  
+  map %>%
+    leaflet::addLegend(
+      pal = pal,
+      values = finite_values,
+      title = title,
+      opacity = 1
+    )
+}
 
 #' @title Render Disease Prevalence Map
 #' @param sf_df sf object. Spatial data after joining with epidemiological results.
@@ -168,7 +222,7 @@ render_prevalence_map <- function(sf_df, target_var, is_offline,
     na.color = "#9e9e9e"
   )
 
-  add_base_geospatial_map(
+  map <- add_base_geospatial_map(
     sf_df          = sf_df,
     target_var     = target_var,
     pal            = pal,
@@ -177,13 +231,9 @@ render_prevalence_map <- function(sf_df, target_var, is_offline,
     selected_level = selected_level,
     config         = config,
     active_country = active_country
-  ) %>%
-    leaflet::addLegend(
-      pal    = pal,
-      values = sf_df[[target_var]],
-      title  = pretty_var_label(target_var),
-      opacity = 1
-    )
+  )
+  
+  add_prevalence_legend(map, sf_df, target_var, pal)
 }
 
 
@@ -201,8 +251,20 @@ render_lisa_map <- function(sf_df, target_var, is_offline,
     "Low-High" = "#74add1", "Not Significant" = "#d9d9d9", "No data" = "#f0f0f0"
   )
 
-  present_levels <- levels(droplevels(factor(sf_df$lisa_category, levels = names(lisa_colors))))
-  pal <- leaflet::colorFactor(palette = lisa_colors[present_levels], domain = present_levels)
+  sf_df$lisa_category <- as.character(sf_df$lisa_category)
+  sf_df$lisa_category[is.na(sf_df$lisa_category) | sf_df$lisa_category == ""] <- "No data"
+  
+  present_levels <- intersect(names(lisa_colors), unique(sf_df$lisa_category))
+  
+  if (length(present_levels) == 0) {
+    present_levels <- "No data"
+  }
+  
+  pal <- leaflet::colorFactor(
+    palette = lisa_colors[present_levels],
+    domain = present_levels,
+    na.color = lisa_colors[["No data"]]
+  )
 
   add_base_geospatial_map(
     sf_df          = sf_df,
@@ -215,9 +277,10 @@ render_lisa_map <- function(sf_df, target_var, is_offline,
     active_country = active_country
   ) %>%
     leaflet::addLegend(
-      pal    = pal,
-      values = sf_df$lisa_category,
-      title  = "LISA Clusters"
+      colors = unname(lisa_colors[present_levels]),
+      labels = present_levels,
+      title = "LISA Clusters",
+      opacity = 1
     )
 }
 

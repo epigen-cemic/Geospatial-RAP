@@ -631,3 +631,51 @@ body.font-size-xlarge .global-moran-banner {
   line-height: 1.4;
   opacity: 0.95;
 }
+
+
+/* ==========================================
+   TABLE FILTERS
+   ========================================== */
+.table-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 10px 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: #000000;
+}
+
+.table-filter-bar .form-group {
+  margin-bottom: 0;
+}
+
+.table-filter-inline-label {
+  margin: 0;
+  color: #000000 !important;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 34px;
+}
+
+.table-filter-bar label {
+  color: #000000 !important;
+}
+
+.table-filter-bar .selectize-control,
+.table-filter-bar .form-control {
+  margin-bottom: 0;
+}
+
+.table-filter-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-filter-separator {
+  color: #000000;
+  font-weight: 600;
+}
