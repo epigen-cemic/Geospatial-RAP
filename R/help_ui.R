@@ -22,8 +22,7 @@ geospatial_help_tab <- function(ns = identity) {
       ),
       tags$ul(
         tags$li(tags$a(href = "docs/User Manual.pdf", target = "_blank", "Open user manual")),
-#        tags$li(tags$a(href = "docs/HELP_EN.pdf", target = "_blank", "Open Geospatial developer/admin guide - English (PDF)")),
-#        tags$li(tags$a(href = "docs/HELP_ES.pdf", target = "_blank", "Abrir guía de desarrollo/administración - Español (PDF)"))
+        tags$li(tags$a(href = "docs/User Manual ES.pdf", target = "_blank", "Open spanish user manual"))
       )
     ),
 
