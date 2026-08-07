@@ -1,14 +1,44 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
+type: software
+title: "Geospatial-RAP: A spatial epidemiology tool for prevalence mapping and local cluster detection"
+abstract: "Geospatial-RAP is an R/Shiny tool for spatial epidemiological analysis using area-based case and population data. It generates prevalence maps, supports single-week or multi-week time windows, and applies spatial autocorrelation methods to identify geographic patterns, local clusters, and spatial outliers. The tool produces map-based outputs and downloadable geospatial results to support descriptive surveillance, hotspot assessment, and local public health interpretation."
 authors:
-- family-names: "YOUR_NAME_HERE"
-  given-names: "YOUR_NAME_HERE"
-  orcid: "https://orcid.org/0000-0000-0000-0000"
-- family-names: "Lisa"
-  given-names: "Mona"
-  orcid: "https://orcid.org/0000-0000-0000-0000"
-title: "Geospatial-RAP"
+  - family-names: "Giordano"
+    given-names: "M. E."
+    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
+  - family-names: "Gili"
+    given-names: "J. A."
+    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
+  - family-names: "López-Camelo"
+    given-names: "J. S."
+    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
+  - family-names: "Poletta"
+    given-names: "F. A."
+    email: "fpoletta@cemic.edu.ar"
+    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
+contact:
+  - family-names: "Poletta"
+    given-names: "F. A."
+    email: "fpoletta@cemic.edu.ar"
+    affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
 version: 1.0.0
-doi: 10.5281/zenodo.1234
 date-released: 2026-06-12
+# doi: "10.5281/zenodo.1234567"  # DOI: reemplazar con el DOI real al hacer el release
+license: MIT
 url: "https://github.com/epigen-cemic/Geospatial-RAP"
+keywords:
+  - "public health surveillance"
+  - "spatial epidemiology"
+  - "prevalence mapping"
+  - "cluster detection"
+  - "spatial autocorrelation"
+  - "R Shiny"
+  - "epidemiology"
+references:
+  - type: grant
+    title: "Analysis for Action (formerly the Pandemic Preparedness Toolkit)"
+    institution:
+      name: "UK Office for National Statistics (ONS)"
+    notes: "Geospatial-RAP was developed at CEMIC, the Argentina Delivery Partner for Analysis for Action. This work was supported by Wellcome (Grant number 226596/Z/22/Z)."
+
