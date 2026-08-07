@@ -21,8 +21,7 @@ geospatial_help_tab <- function(ns = identity) {
         "Population is required because prevalence is calculated as cases per 100,000 population."
       ),
       tags$ul(
-        tags$li(tags$a(href = "docs/User Manual.pdf", target = "_blank", "Open user manual")),
-        tags$li(tags$a(href = "docs/User Manual ES.pdf", target = "_blank", "Open spanish user manual"))
+        tags$li(tags$a(href = "docs/2.3.3 Geospatial Analysis - 2.3 User-Manual.docx", download ="2.3.3 Geospatial Analysis - 2.3 User-Manual.docx" ,target = "_self", "Download Geospatial user manual"))
       )
     ),
 
