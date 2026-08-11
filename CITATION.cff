@@ -1,4 +1,4 @@
-cff-version: 1.2.0
+cff-version: 1.2.6
 message: "If you use this software, please cite it as below."
 type: software
 title: "Geospatial-RAP: A spatial epidemiology tool for prevalence mapping and local cluster detection"
@@ -24,7 +24,7 @@ contact:
     orcid: "https://orcid.org/0000-0002-6102-8416"
     email: "fpoletta@cemic.edu.ar"
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
-version: 1.0.0
+version: 1.2.6
 date-released: 2026-06-12
 # doi:
 license: MIT
