@@ -15,16 +15,18 @@ authors:
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
   - family-names: "Poletta"
     given-names: "F. A."
+    orcid: "https://orcid.org/0000-0002-6102-8416"
     email: "fpoletta@cemic.edu.ar"
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
 contact:
   - family-names: "Poletta"
     given-names: "F. A."
+    orcid: "https://orcid.org/0000-0002-6102-8416"
     email: "fpoletta@cemic.edu.ar"
     affiliation: "Laboratorio de Epidemiología Genética, Centro de Educación Médica e Investigaciones Clínicas \"Norberto Quirno\" (UE CEMIC-CONICET)"
 version: 1.0.0
 date-released: 2026-06-12
-# doi: "10.5281/zenodo.1234567"  # DOI: reemplazar con el DOI real al hacer el release
+# doi:
 license: MIT
 url: "https://github.com/epigen-cemic/Geospatial-RAP"
 keywords:
