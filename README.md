@@ -220,3 +220,17 @@ The standalone CUSUM and Geospatial RAP tools now use the same sidebar upload pa
 The upload panel includes a file manager for the current Shiny session. After files are uploaded, users can open **Manage files** to review uploaded files, deactivate files that should not be included in the analysis, remove inactive files, or clear all uploaded files without restarting the app.
 
 All active uploaded files are combined for the Geospatial workflow.
+
+## Project
+
+**Project:** Analysis for Action  – Argentina Work Package WS5
+**Institution / Delivery Partner:** CEMIC. 
+The Geospatial-RAP was developed at CEMIC, the Argentina Delivery Partner for Analysis for Action (formerly the Pandemic Preparedness Toolkit), a project led by the UK Office for National Statistics (ONS). This work was supported by the Wellcome (Grant number 226596/Z/22/Z).
+
+## Citation
+
+If you use Geospatial-RAP in research, publications, or other work, please cite the software using the following DOI:
+Giordano, M. E., Gili, J. A., López-Camelo, J. S.& Poletta, F. A. (2026). Geospatial-RAP: A spatial epidemiology tool for prevalence mapping and local cluster detection (Version v1.2.6) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21894160 
+
+** Geospatial-RAP v1.2.6**  
+https://doi.org/10.5281/zenodo.21894160
