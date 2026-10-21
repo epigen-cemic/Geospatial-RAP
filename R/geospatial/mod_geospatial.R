@@ -14,7 +14,60 @@ geospatialUI <- function(id) {
 
   fluidPage(
     shinyjs::useShinyjs(),
-    tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "config.css")),
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "config.css"),
+      tags$script(HTML(sprintf("
+        (function () {
+          var isLoadingOutput = false;
+          var overlaySelector = '#%s';
+          var runAnalysisInputId = '%s';
+          var mapOutputIds = ['%s', '%s'];
+
+          function isGeospatialMap(event) {
+            return mapOutputIds.indexOf(event.name) !== -1;
+          }
+
+          function showGeospatialLoading() {
+            isLoadingOutput = true;
+            $(overlaySelector)
+              .addClass('is-visible')
+              .attr('aria-hidden', 'false');
+          }
+
+          function hideGeospatialLoading() {
+            isLoadingOutput = false;
+            $(overlaySelector)
+              .removeClass('is-visible')
+              .attr('aria-hidden', 'true');
+          }
+
+          $(document)
+            .off('shiny:inputchanged.geospatialLoading')
+            .on('shiny:inputchanged.geospatialLoading', function (event) {
+              if (event.name === runAnalysisInputId) {
+                showGeospatialLoading();
+              }
+            })
+            .off('shiny:outputinvalidated.geospatialLoading')
+            .on('shiny:outputinvalidated.geospatialLoading', function (event) {
+              if (isGeospatialMap(event)) {
+                showGeospatialLoading();
+              }
+            })
+            .off('shiny:idle.geospatialLoading')
+            .on('shiny:idle.geospatialLoading', function () {
+              if (isLoadingOutput) {
+                hideGeospatialLoading();
+              }
+            });
+        }());
+      ",
+        ns("loading_overlay"),
+        ns("run_analysis"),
+        ns("prevalence_map"),
+        ns("lisa_map")
+      )))
+    ),
 
     div(class = "nav-bar",
         div(class = "nav-content",
@@ -80,6 +133,26 @@ geospatialUI <- function(id) {
               )
             )
         )
+    ),
+
+    tags$div(
+      id = ns("loading_overlay"),
+      class = "geospatial-loading-overlay",
+      role = "status",
+      `aria-live` = "polite",
+      `aria-hidden` = "true",
+      tags$div(
+        class = "geospatial-loading-dialog",
+        tags$div(
+          class = "geospatial-loading-spinner",
+          `aria-hidden` = "true"
+        ),
+        tags$div(class = "geospatial-loading-title", "Loading..."),
+        tags$div(
+          class = "geospatial-loading-message",
+          "Processing data and updating maps."
+        )
+      )
     )
   )
 }
